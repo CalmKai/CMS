@@ -390,8 +390,8 @@
 
   function uploadFileHomeworkWorksheets() {
     var filename = selectedFile.name;
-    var storageRef = firebase.storage().ref('HomeworkWorksheets/images/' + filename);
-    var uploadTask = storageRef.put(selectedFile);
+    var storageRef = firebase.storage().ref();
+    var uploadTask = storageRef.child('HomeworkWorksheets/images/' + filename).put(selectedFile);
 
     uploadTask.on('state_changed', function(snap) {
 
