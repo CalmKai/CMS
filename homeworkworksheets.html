@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title id="websiteName"></title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="css/custom.css">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar top-bar"></span>
+            <span class="icon-bar middle-bar"></span>
+            <span class="icon-bar bottom-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#" id="brandName"></a>
+       </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="index.html" id="firstLink"></a></li>
+            <li><a href="#" id="secondLink"></a></li>
+            <li><a href="#" id="thirdLink"></a></li>
+            <li><a href="#" id="fourthLink"></a></li>
+            <li><a href="#" id="fifthLink"></a></li>
+          </ul>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container-fluid -->
+    </nav>
+    <div class="container">
+      <center>
+        <h1 class="pageTitle" style="padding-top: 100px;" id="pageTitle"></h1>
+      </center>
+
+      <div id="content"></div>
+    </div>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+  </body>
+
+  <script src="https://www.gstatic.com/firebasejs/4.1.3/firebase.js"></script>
+
+  <!-- font awesome icons -->
+  <script src="https://use.fontawesome.com/e69e0aac8c.js"></script>
+
+  <script>
+    var config = {
+      apiKey: "AIzaSyDDahul-ML9670Hw4fBhG8MCosixAw86fA",
+      authDomain: "jessicas-website.firebaseapp.com",
+      databaseURL: "https://jessicas-website.firebaseio.com",
+      projectId: "jessicas-website",
+      storageBucket: "",
+      messagingSenderId: "277398527548"
+    };
+
+    firebase.initializeApp(config);
+
+    var dbRef = firebase.database();
+
+    var websiteName = document.getElementById('websiteName');
+
+    dbRef.ref('Settings').child('websiteName').on('value', snap => websiteName.innerText = snap.val());
+
+    //Navbar
+    var brandName = document.getElementById('brandName');
+    var firstLink = document.getElementById('firstLink');
+    var secondLink = document.getElementById('secondLink');
+    var thirdLink = document.getElementById('thirdLink');
+    var fourthLink = document.getElementById('fourthLink');
+    var fifthLink = document.getElementById('fifthLink');
+
+    dbRef.ref('Navbar').child('brandName').on('value', snap => brandName.innerText = snap.val());
+    dbRef.ref('Navbar').child('firstLink').on('value', snap => firstLink.innerText = snap.val());
+    dbRef.ref('Navbar').child('secondLink').on('value', snap => secondLink.innerText = snap.val());
+    dbRef.ref('Navbar').child('thirdLink').on('value', snap => thirdLink.innerText = snap.val());
+    dbRef.ref('Navbar').child('fourthLink').on('value', snap => fourthLink.innerText = snap.val());
+    dbRef.ref('Navbar').child('fifthLink').on('value', snap => fifthLink.innerText = snap.val());
+
+    //Page
+    var pageTitle = document.getElementById('pageTitle');
+
+    dbRef.ref('HomeworkWorksheets').child('pageTitle').on('value', snap => pageTitle.innerText = snap.val());
+
+    //Article Creation
+    var limit = 5;
+    dbRef.ref('HomeworkWorksheets').child('amountOnScreen').once('value', function(snap){
+      limit = Number(snap.val());
+      console.log('this is the limit: ' + limit)
+      showArticles();
+    });
+
+    var articles = [];
+
+    function showArticles(){
+      console.log('this is the limit in function: ' + limit + " type:" + typeof(limit))
+      firebase.database().ref('HomeworkWorksheets/posts')
+        .orderByChild('date_edited').limitToLast(limit)
+        .on('child_added', function(data) {
+          firebase.database().ref('HomeworkWorksheets/posts/' + data.key)
+            .on('value', function(articleData) {
+              articles.push({
+                id: data.key,
+                dateEdited: data.val().date_edited,
+                data: articleData.val()
+              });
+              articles.sort(function(a, b) {
+                return a.dateEdited - b.dateEdited;
+              });
+              console.log("length" + articles.length);
+              var i = articles.length-1;
+              createArticle(articles[i].id, articles[i].dateEdited, articles[i].data);
+            }, function(err) {
+              showError(err);
+            });
+          
+        }, function(err) {
+          alert(err);
+        })
+
+        // articles.reverse();
+        // for(var i = 0; i <= limit; i += 1) {
+        //   createArticle(articles[i].id, articles[i].dateEdited, articles[i].data);
+        // }
+      }
+
+    // function showArticles(){
+    // console.log('this is the limit in function: ' + limit + " type:" + typeof(limit))
+    // firebase.database().ref('HomeworkWorksheets/posts')
+    //   .orderByChild('date_edited').limitToLast(limit)
+    //   .on('child_added', function(data) {
+    //     firebase.database().ref('HomeworkWorksheets/posts/' + data.key)
+    //       .on('value', function(articleData) {
+    //         articles.push({
+    //           id: data.key,
+    //           dateEdited: data.val().date_edited,
+    //           data: articleData.val()
+    //         });
+            
+    //   }, function(err) {
+    //     alert(err);
+    //   })
+    //        articles.sort(function(a, b) {
+    //           return a.dateEdited - b.dateEdited;
+    //         });
+    //         console.log("length" + articles.length);
+    //         for(i = 0; i < limit; i++){
+    //         createArticle(articles[i].id, articles[i].dateEdited, articles[i].data);
+
+    // }
+    //     });
+
+           
+
+
+    // }
+      
+    function showError(err) {
+      var el = document.createElement('div');
+      el.innerHTML = err.message;
+      document.getElementById('content').appendChild(el);
+    }
+      
+    function createArticle(id, date_edited, data) {
+      var el = document.createElement('div');
+      var title = document.createElement('h3');
+      var body = document.createElement('p');
+      var byline = document.createElement('span');
+
+      var monthNum = data.dueDate.substring(5, 7);
+      var month = "";
+      var day = data.dueDate.substring(8, 10);
+      var year = data.dueDate.substring(0, 4);
+
+      if(monthNum == "01") {
+        month = "January";
+      }
+      if(monthNum == "02") {
+        month = "February";
+      }
+      if(monthNum == "03") {
+        month = "March";
+      }
+      if(monthNum == "04") {
+        month = "April";
+      }
+      if(monthNum == "05") {
+        month = "May";
+      }
+      if(monthNum == "06") {
+        month = "June";
+      }
+      if(monthNum == "07") {
+        month = "July";
+      }
+      if(monthNum == "08") {
+        month = "August";
+      }
+      if(monthNum == "09") {
+        month = "September";
+      }
+      if(monthNum == "10") {
+        month = "October";
+      }
+      if(monthNum == "11") {
+        month = "November";
+      }
+      if(monthNum == "12") {
+        month = "December";
+      }
+
+      title.innerHTML = data.title;
+      body.innerHTML = data.body + '<hr>';
+      byline.innerHTML = 'Date: '+ new Date(date_edited) + '<br>' + 'Due Date: ' + month + " " + day + ", " + year;
+      el.appendChild(title);
+      el.appendChild(byline);
+      el.appendChild(body);
+      document.getElementById('content').appendChild(el);
+
+    }
+  </script>
+</html>
